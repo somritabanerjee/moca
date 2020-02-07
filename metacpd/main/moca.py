@@ -33,7 +33,7 @@ class MOCA(nn.Module):
 
         # initial log_prx:
         self.init_log_prgx = nn.Parameter(torch.zeros([1,1]), requires_grad=False)
-
+        # MOCA line 3
 
     def nll(self, log_pi, log_prgx):
         """
@@ -92,9 +92,10 @@ class MOCA(nn.Module):
         # we add a batch dimension and a time dimension
         prior_params = tuple( p[None,None,...] for p in self.meta_learning_alg.prior_params() )
 
-
+        # MOCA line 4
         posterior_params = prior_params
         log_prgx = self.init_log_prgx # p(r, all data so far)
+        # MOCA line 3
 
         posterior_params_list.append(posterior_params)
 
@@ -110,6 +111,7 @@ class MOCA(nn.Module):
                 torch.cuda.synchronize()
                 start_time = time.perf_counter()
             
+            # MOCA line 6
             x = x_mat[:,i,:]
             y = y_mat[:,i,:]
 
@@ -131,7 +133,11 @@ class MOCA(nn.Module):
 
             else:
                 log_pygx = log_pi_t
+            
+            # log_prgx is MOCA line 7
+            # log_pygx is MOCA line 8
 
+            # is prgx None for sinusoid with moca/alpaca? YES.
             if prgx is not None:
                 if task_supervision is not None:
                     override_log_prgx = torch.log(prgx[i]) + torch.log(task_supervision[i].unsqueeze(-1))
@@ -143,6 +149,7 @@ class MOCA(nn.Module):
                     
             if not return_timing: log_prgx_list.append(log_prgx)
 
+            # MOCA line 10
             # use these posterior predictives and log p(r | hist) to evaluate y under the full posterior predictive
             nll = self.nll(log_pygx, log_prgx)
             if not return_timing: nll_list.append(nll)
@@ -157,8 +164,10 @@ class MOCA(nn.Module):
             log_prx_grow = self.log_1m_hazard + log_pygx + log_prgx                      # p( r_t = r_{t-1} + 1 )
             log_prx_chpt = self.log_hazard + torch.logsumexp(log_pygx + log_prgx, dim=1) # p (r_t = 0 )
 
+            # log_prx = b_t(r_t)
             log_prx = torch.cat((log_prx_grow,log_prx_chpt[:,None]), 1) # shape (batch_size, i + 2)
             log_prgx = torch.log_softmax(log_prx, dim=1) # log p(r_{i+1} | x_{0:i}, y_{0:i})
+            # log_prgx = b_t(r_t | x_t) = 
 
             # update posteriors update
             posterior_params = tuple( torch.cat((u, p.expand(*([batch_size] + list(p.shape)[1:]))), axis=1) for u,p in zip(updated_posterior_params, prior_params) )

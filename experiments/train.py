@@ -202,6 +202,7 @@ def main(config):
     else:
         best_val = 0.
 
+    # MOCA line 2
     for i, data in enumerate(dataloader):
         if data['x'].shape[0] == config['data.batch_size']:
 
@@ -235,6 +236,7 @@ def main(config):
 
             if i % config['train.grad_accumulation_steps'] == 0:
                 optimizer.step()
+                # MOCA line 15
 
                 running_nll.append(mean_nll.item())
                 writer.add_scalar('NLL/Train', mean_nll.item(), i)

@@ -50,6 +50,7 @@ def compute_acc(y,nlls):
 def get_prgx(config,horizon,batch_size,switch_times=None):
 
     model = config['model.model']
+    # This returns 'main' for sinusoid one with moca, alpaca
     sliding_window_len = config['data.window_length']
 
     if model == 'main' or model == 'conv_net':
